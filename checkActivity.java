@@ -22,8 +22,8 @@ public class checkActivity extends AppCompatActivity {
     }
 
     private Intent nextActivity(){
-        if(prefs.getBoolean("loggedIn", true)) return new Intent(checkActivity.this, logActivity.class);
-        return new Intent(checkActivity.this, Main_menu.class);
+        if(prefs.getBoolean("loggedIn", false)) return new Intent(checkActivity.this, Main_menu.class);
+        return new Intent(checkActivity.this, logActivity.class);
     }
 
     private void changeActivity(Intent intent){
