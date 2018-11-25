@@ -53,7 +53,7 @@ public class logActivity extends AppCompatActivity {
             if(code != null && state != null && OAuthParams.state.equals(state)){
                 RacoService rs = ServiceGenerator.createService(RacoService.class);
                 //Fem la crida del RacoService per obtenir el ACCESS TOKEN
-                Call<TokensClass> cAS = rs.getAccesToken("authorization_code", code, OAuthParams.redirectUri, OAuthParams.clientID, OAuthParams.clientSecret);
+                Call<TokensClass> cAS = rs.getAccesToken("authorization_code", OAuthParams.redirectUri, code, OAuthParams.clientID, OAuthParams.clientSecret);
                 Log.d("Acces Token", "rebut el token: " + cAS);
                 cAS.enqueue(new Callback<TokensClass>() {
                     @Override

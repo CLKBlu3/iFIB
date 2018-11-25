@@ -2,11 +2,9 @@ package marques.ifib;
 
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -90,8 +88,9 @@ public class Main_menu extends AppCompatActivity
 
         } else if (id == R.id.nav_share) {
 
-        } else if (id == R.id.nav_send) {
-
+        } else if (id == R.id.nav_send) { //LOG OUT
+            resetSharedPrefs();
+            goToLogActivity();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -99,4 +98,19 @@ public class Main_menu extends AppCompatActivity
         return true;
     }
 
+    private void resetSharedPrefs(){
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("accessToken", null);
+        editor.putString("refreshToken", null);
+        editor.putBoolean("loggedIn", false);
+        editor.apply();
+    }
+
+    private void goToLogActivity(){
+        Intent intent = new Intent(Main_menu.this, logActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+        startActivity(intent);
+    }
 }
