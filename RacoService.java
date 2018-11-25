@@ -1,5 +1,7 @@
 package marques.ifib;
 
+import android.media.session.MediaSession;
+
 import retrofit2.Call;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
@@ -26,5 +28,12 @@ public interface RacoService {
             @Field("refresh_token") String refreshToken,
             @Field("client_id") String clientId,
             @Field("client_secret") String clientSecret
+    );
+
+    @POST("o/revoke_token")
+    @FormUrlEncoded
+    Call<TokensClass> revokeToken(
+            @Field("token") String token,
+            @Field("client_id") String clientId
     );
 }
