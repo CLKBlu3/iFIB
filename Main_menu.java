@@ -7,8 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.Image;
-import android.media.session.MediaSession;
+
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -17,6 +16,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
@@ -31,7 +31,6 @@ public class Main_menu extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private TokensClass responseToken;
-    private boolean loggedIn;
     SharedPreferences prefs;
     String accessToken;
     UserService uS;
@@ -42,7 +41,7 @@ public class Main_menu extends AppCompatActivity
         setContentView(R.layout.activity_main_menu);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         //setSupportActionBar(toolbar);
-        prefs = this.getSharedPreferences("marques.ifib", Context.MODE_PRIVATE);
+
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -53,11 +52,11 @@ public class Main_menu extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         Menu menu = navigationView.getMenu();
 
-
+        navigationView.setNavigationItemSelectedListener(this);
         //Canviar els valors de l'usuari pels adequats
+        prefs = this.getSharedPreferences("marques.ifib", Context.MODE_PRIVATE);
         getUserData();
         getUserFoto();
-        navigationView.setNavigationItemSelectedListener(this);
     }
 
 
@@ -110,7 +109,7 @@ public class Main_menu extends AppCompatActivity
         } else if (id == R.id.nav_share) {
 
         } else if (id == R.id.nav_log_out) { //LOG OUT
-            //revokeToken();
+            revokeToken();
             resetSharedPrefs();
             goToLogActivity();
         }
@@ -122,15 +121,17 @@ public class Main_menu extends AppCompatActivity
 
 
     private void getUserFoto(){
-        accessToken = prefs.getString("accessToken", null);
-        final ImageView profileImg = (ImageView) findViewById(R.id.profileImg);
+        accessToken = prefs.getString("access_token", null);
 
+        Log.d("creant Service: ", "Creant service");
         uS = ServiceGenerator.createService(UserService.class,OAuthParams.clientID,OAuthParams.clientSecret,accessToken,this);
+        Log.d("creant Service: ", "Service Creat, procedint a fer peticio de FOTO");
         Call<ResponseBody> imgResponse = uS.getUserFoto();
         imgResponse.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if(response.isSuccessful()){
+                    ImageView profileImg = findViewById(R.id.profileImg);
                     Bitmap photoBm = BitmapFactory.decodeStream(response.body().byteStream());
                     profileImg.setImageBitmap(photoBm);
                 }
@@ -138,30 +139,32 @@ public class Main_menu extends AppCompatActivity
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
-                error(-1);
+                //error(-1);
+                Log.d("FOTO: ", "FOTO FAILURE");
             }
         });
     }
 
     private void getUserData(){
-        accessToken = prefs.getString("accessToken", null);
+        accessToken = prefs.getString("access_token", null);
 
         //PARAMETRES QUE PODEN CANVIAR PEL LOGIN
-        final TextView name = (TextView) findViewById(R.id.nomicognoms);
-        final TextView email = (TextView) findViewById(R.id.email);
         //final ImageView profileImg = (ImageView) findViewById(R.id.profileImg);
-
-        uS = ServiceGenerator.createService(UserService.class,OAuthParams.clientID,OAuthParams.clientSecret,accessToken,this);
+        Log.d("createServ", "PARAMETROS; CLIENT ID: " + OAuthParams.clientID + " CLIENT SECRET: " + OAuthParams.clientSecret + " token: " + accessToken);
+        uS = ServiceGenerator.createService(UserService.class, OAuthParams.clientID, OAuthParams.clientSecret, accessToken, this);
+        Log.d("creant Service: ", "Service Creat, procedint a fer peticio de DATA");
         Call<User> userResponse = uS.getUserData();
         userResponse.enqueue(new Callback<User>() {
             @Override
             public void onResponse(Call<User> call, Response<User> response) {
                 if(response.isSuccessful()){
-                     String nameStr = response.body().getNom();
-                     nameStr += " " + response.body().getCognoms();
-                     String emailStr = response.body().getEmail();
-                     name.setText(nameStr);
-                     email.setText(emailStr);
+                    TextView name = findViewById(R.id.nomicognoms);
+                    TextView email = findViewById(R.id.email);
+                    String nameStr = response.body().getNom();
+                    nameStr += " " + response.body().getCognoms();
+                    String emailStr = response.body().getEmail();
+                    name.setText(nameStr);
+                    email.setText(emailStr);
                 }
                 else{
                     if(response.code() == 401) refreshToken();
@@ -170,7 +173,8 @@ public class Main_menu extends AppCompatActivity
 
             @Override
             public void onFailure(Call<User> call, Throwable t) {
-                error(-1);
+                //error(-1);
+                Log.d("DATA: ", "DATA FAILURE");
             }
 
         });
@@ -178,42 +182,46 @@ public class Main_menu extends AppCompatActivity
 
     private void refreshToken(){
         RacoService refreshService = ServiceGenerator.createService(RacoService.class);
-        String refreshToken = prefs.getString("refreshToken", null);
+        String refreshToken = prefs.getString("refresh_token", null);
         Call<TokensClass> refreshCall = refreshService.getRefreshToken("refresh_token", refreshToken, OAuthParams.clientID, OAuthParams.clientSecret);
+        Log.d("creant Service: ", "Service Creat, procedint REFRESH TOKEN");
         refreshCall.enqueue(new Callback<TokensClass>() {
             @Override
             public void onResponse(Call<TokensClass> call, Response<TokensClass> response) {
                 if(response.isSuccessful()){
                     TokensClass token = response.body();
                     SharedPreferences.Editor editor = prefs.edit();
-                    editor.putString("accessToken", token.getAccessToken());
-                    editor.putString("refreshToken", token.getRefreshToken());
+                    editor.putString("access_token", token.getAccessToken());
+                    editor.putString("refresh_token", token.getRefreshToken());
                     editor.apply();
                     getUserData();
                 }
-                else error(response.code());
+                else{
+                    //error(response.code());
+                    Log.d("REFRESH TOKEN: ", "REFRESH TOKEN FAILURE");
+                }
             }
 
             @Override
             public void onFailure(Call<TokensClass> call, Throwable t) {
-                error(-1);
+                //error(-1);
             }
         });
     }
 
     private void resetSharedPrefs(){
         SharedPreferences.Editor editor = prefs.edit();
-        editor.putString("accessToken", null);
-        editor.putString("refreshToken", null);
+        editor.putString("access_token", null);
+        editor.putString("refresh_token", null);
         editor.putBoolean("loggedIn", false);
         editor.apply();
     }
 
-    //NO FUNCIONA XD CAGUNDEU
+
     private void revokeToken(){
         RacoService racoService = ServiceGenerator.createService(RacoService.class);
         String token, clientId;
-        token = prefs.getString("accessToken", null);
+        token = prefs.getString("access_token", null);
         clientId = OAuthParams.clientID;
         Call<TokensClass> revokeAccessToken;
         if(token != null && clientId != null){
@@ -222,7 +230,7 @@ public class Main_menu extends AppCompatActivity
                 @Override
                 public void onResponse(Call<TokensClass> call, Response<TokensClass> response) {
                     if(!response.isSuccessful()){
-                        error(response.code());
+                        //error(response.code());
                     }
                 }
 

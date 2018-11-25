@@ -1,6 +1,7 @@
 package marques.ifib;
 
 import android.net.wifi.p2p.WifiP2pManager;
+import android.graphics.Bitmap;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -16,7 +17,7 @@ public interface UserService {
     );
 
     @Headers("Accept: image/jpeg")
-    @GET("jo/foto")
+    @GET("jo/foto.jpg")
     Call<ResponseBody> getUserFoto(
     );
 }
